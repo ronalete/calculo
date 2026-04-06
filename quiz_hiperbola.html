@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Hipérbola — Examen Interactivo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f8f7ff;color:#1f1f1f;padding:16px;max-width:720px;margin:0 auto}
+h1{font-size:22px;font-weight:600;color:#3730a3;margin-bottom:4px}
+.subtitle{font-size:13px;color:#6b7280;margin-bottom:16px}
+.progress-bar{width:100%;height:8px;background:#e0e7ff;border-radius:4px;margin-bottom:10px}
+.progress-fill{height:100%;background:#4f46e5;border-radius:4px;transition:width .3s}
+.stats{display:flex;gap:10px;margin-bottom:14px}
+.stat{background:#fff;padding:8px 14px;border-radius:10px;border:1px solid #e0e7ff;font-size:13px}
+.stat span{font-weight:600;color:#3730a3}
+.question-card{background:#fff;border:1px solid #e0e7ff;border-radius:14px;padding:22px;margin-bottom:14px;box-shadow:0 2px 8px #4f46e510}
+.q-meta{font-size:11px;color:#9ca3af;margin-bottom:8px;display:flex;gap:8px;align-items:center}
+.badge{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+.b-calc{background:#dcfce7;color:#166534}.b-graph{background:#dbeafe;color:#1e40af}.b-conc{background:#ede9fe;color:#4c1d95}.b-fact{background:#fef3c7;color:#92400e}
+.q-text{font-size:16px;line-height:1.6;margin-bottom:12px;font-weight:500}
+.q-formula{background:#f5f3ff;border-radius:8px;padding:10px 14px;font-family:'Courier New',monospace;font-size:14px;margin-bottom:12px;border-left:4px solid #6d28d9;color:#3730a3}
+canvas{border:1px solid #e0e7ff;border-radius:10px;display:block;margin:12px auto;background:#fff}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+@media(max-width:480px){.options{grid-template-columns:1fr}}
+.opt{padding:11px 14px;border:1.5px solid #c7d2fe;border-radius:10px;cursor:pointer;font-size:14px;text-align:left;background:#fff;color:#1f1f1f;transition:all .15s}
+.opt:hover:not(:disabled){background:#ede9fe;border-color:#6d28d9}
+.opt.correct{background:#dcfce7;border-color:#16a34a;color:#14532d;font-weight:600}
+.opt.wrong{background:#fee2e2;border-color:#dc2626;color:#7f1d1d;font-weight:600}
+.opt.reveal{background:#f1f5f9;border-color:#cbd5e1;color:#64748b}
+.opt:disabled{cursor:default}
+.explanation{margin-top:14px;background:#f0fdf4;border-radius:10px;padding:14px;font-size:14px;line-height:1.65;display:none;border-left:4px solid #16a34a}
+.exp-title{font-weight:700;color:#166534;margin-bottom:6px;font-size:14px}
+.nav-row{display:flex;gap:8px;margin-top:14px;align-items:center;flex-wrap:wrap}
+button{padding:9px 18px;border:1.5px solid #c7d2fe;border-radius:10px;background:#fff;cursor:pointer;font-size:14px;color:#3730a3;transition:all .15s;font-family:inherit}
+button:hover:not(:disabled){background:#ede9fe}
+button:disabled{opacity:.5;cursor:default}
+button.primary{background:#4f46e5;color:#fff;border-color:#4f46e5;font-weight:600}
+button.primary:hover{background:#3730a3}
+.result-screen{text-align:center;padding:30px 20px}
+.result-score{font-size:60px;font-weight:700;margin-bottom:8px}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.filter-btn{padding:5px 14px;border-radius:20px;border:1.5px solid #c7d2fe;font-size:12px;cursor:pointer;background:#fff;color:#6b7280;font-family:inherit}
+.filter-btn.active{background:#4f46e5;color:#fff;border-color:#4f46e5;font-weight:600}
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.score-box{text-align:right;font-size:14px;font-weight:600}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const ALL_Q = [
+  {t:"conc",q:"¿Cuál es la definición de hipérbola?",f:null,opts:["Lugar geométrico de puntos cuya diferencia de distancias a dos focos fijos es constante","Lugar geométrico de puntos equidistantes a un foco y una directriz","Lugar geométrico de puntos cuya suma de distancias a dos focos es constante","Sección cónica formada al cortar un cono con un plano paralelo a la base"],ans:0,exp:"La hipérbola se define como el lugar geométrico de puntos P en el plano tal que |PF₁ - PF₂| = 2a, donde F₁ y F₂ son los focos. Esto la distingue de la elipse (suma) y la parábola (un solo foco)."},
+  {t:"conc",q:"En la hipérbola canónica x²/a² - y²/b² = 1, ¿qué representan los vértices?",f:"x²/a² - y²/b² = 1",opts:["Puntos (±a, 0)","Puntos (0, ±b)","Puntos (±c, 0)","Puntos (±a, ±b)"],ans:0,exp:"Los vértices son los puntos donde la hipérbola cruza el eje real (eje x). Se ubican en (a, 0) y (-a, 0). Los focos están en (±c, 0) donde c² = a² + b²."},
+  {t:"conc",q:"La ecuación c² = a² + b² corresponde a:",f:"c² = a² + b²",opts:["La relación focal de la hipérbola","La relación focal de la elipse","El teorema de Pitágoras en el triángulo rectángulo del cono","La excentricidad al cuadrado"],ans:0,exp:"En la hipérbola: c² = a² + b². En la elipse es diferente: c² = a² - b². La hipérbola tiene c > a."},
+  {t:"conc",q:"¿Cuál es la excentricidad de una hipérbola?",f:"e = c/a",opts:["e > 1","e = 1","0 < e < 1","e = 0"],ans:0,exp:"La excentricidad e = c/a. Para la hipérbola, como c > a, se cumple e > 1. Para la elipse: 0 < e < 1. Para la parábola: e = 1. Para el círculo: e = 0."},
+  {t:"conc",q:"Las asíntotas de la hipérbola x²/a² - y²/b² = 1 son:",f:"x²/a² - y²/b² = 1",opts:["y = ±(b/a)x","y = ±(a/b)x","y = ±ax","y = ±bx"],ans:0,exp:"Las asíntotas son rectas a las que la curva se aproxima sin tocarla. Para x²/a² - y²/b² = 1, las asíntotas son y = ±(b/a)x."},
+  {t:"conc",q:"¿Qué es el eje conjugado de la hipérbola?",f:null,opts:["El segmento de longitud 2b perpendicular al eje real en el centro","El segmento entre los dos focos","El segmento entre los dos vértices","La longitud de las asíntotas"],ans:0,exp:"El eje conjugado tiene longitud 2b y es perpendicular al eje real en el centro. Sus extremos son (0, b) y (0, -b)."},
+  {t:"conc",q:"¿Qué tipo de hipérbola tiene la ecuación y²/a² - x²/b² = 1?",f:"y²/a² - x²/b² = 1",opts:["Hipérbola con eje real vertical","Hipérbola con eje real horizontal","Hipérbola equilátera","Hipérbola degenerada"],ans:0,exp:"Cuando y² tiene signo positivo, el eje real es vertical. Los vértices son (0, ±a) y los focos (0, ±c)."},
+  {t:"conc",q:"La longitud del lado recto (LR) de la hipérbola es:",f:"LR = 2b²/a",opts:["2b²/a","2a²/b","2ab","b²/a"],ans:0,exp:"El lado recto es la cuerda focal perpendicular al eje real. Su longitud es LR = 2b²/a."},
+  {t:"conc",q:"¿Qué es una hipérbola equilátera (o rectangular)?",f:"xy = k",opts:["Aquella donde a = b, con asíntotas perpendiculares","Aquella donde a = c","Aquella con excentricidad igual a √2/2","Aquella donde b = c"],ans:0,exp:"La hipérbola equilátera tiene a = b, haciendo las asíntotas y = ±x (perpendiculares). Su ecuación es x² - y² = a²."},
+  {t:"conc",q:"¿Cuántas ramas tiene una hipérbola?",f:null,opts:["Dos ramas separadas","Una sola rama continua","Cuatro ramas","Varía según la ecuación"],ans:0,exp:"La hipérbola siempre tiene exactamente dos ramas simétricas respecto al centro."},
+  {t:"calc",q:"Identifica a, b y c en la hipérbola: x²/16 - y²/9 = 1",f:"x²/16 - y²/9 = 1",opts:["a=4, b=3, c=5","a=16, b=9, c=25","a=4, b=3, c=7","a=3, b=4, c=5"],ans:0,exp:"Comparando: a²=16→a=4, b²=9→b=3. c²=16+9=25→c=5."},
+  {t:"calc",q:"Para x²/25 - y²/144 = 1, calcula la excentricidad.",f:"e = c/a",opts:["e = 13/5","e = 13/12","e = 5/13","e = 12/5"],ans:0,exp:"a=5, b=12. c²=25+144=169→c=13. e=13/5=2.6."},
+  {t:"calc",q:"¿Cuáles son las asíntotas de x²/9 - y²/4 = 1?",f:"y = ±(b/a)x",opts:["y = ±(2/3)x","y = ±(3/2)x","y = ±(4/9)x","y = ±(9/4)x"],ans:0,exp:"a=3, b=2. Asíntotas: y = ±(2/3)x."},
+  {t:"calc",q:"Calcula el lado recto de x²/25 - y²/16 = 1",f:"LR = 2b²/a",opts:["LR = 32/5","LR = 50/4","LR = 8","LR = 25/8"],ans:0,exp:"a=5, b=4. LR = 2(16)/5 = 32/5 = 6.4."},
+  {t:"calc",q:"La hipérbola tiene vértices en (±6, 0) y c = 10. ¿Cuál es la ecuación?",f:"c² = a² + b²",opts:["x²/36 - y²/64 = 1","x²/100 - y²/64 = 1","x²/36 - y²/100 = 1","x²/64 - y²/36 = 1"],ans:0,exp:"a=6, c=10. b²=100-36=64. Ecuación: x²/36 - y²/64 = 1."},
+  {t:"calc",q:"Para y²/49 - x²/576 = 1, calcula c.",f:"c² = a² + b²",opts:["c = 25","c = 23","c = 625","c = √625 = 25"],ans:0,exp:"a²=49, b²=576. c²=625→c=25. Focos (0,±25)."},
+  {t:"calc",q:"¿Qué cónica representa x² - y² = 0?",f:"x² - y² = 0",opts:["Dos rectas y = ±x (hipérbola degenerada)","Una hipérbola equilátera","Un par de parábolas","El punto origen"],ans:0,exp:"x²-y²=0 → (x-y)(x+y)=0 → dos rectas y=x e y=-x. Hipérbola degenerada."},
+  {t:"calc",q:"Para a=3, b=4. Calcula e con 2 decimales.",f:"e = c/a, c² = a² + b²",opts:["e ≈ 1.67","e ≈ 1.33","e ≈ 0.60","e ≈ 2.00"],ans:0,exp:"c²=9+16=25→c=5. e=5/3≈1.67."},
+  {t:"calc",q:"Convierte a forma estándar: 4x² - 9y² = 36",f:"4x² - 9y² = 36",opts:["x²/9 - y²/4 = 1","x²/4 - y²/9 = 1","x²/36 - y²/36 = 1","Ya es estándar"],ans:0,exp:"Dividir entre 36: x²/9 - y²/4 = 1. a=3, b=2."},
+  {t:"calc",q:"¿La hipérbola 9x² - 16y² = 144 tiene sus focos en...?",f:"9x² - 16y² = 144",opts:["(±5, 0)","(±4, 0)","(±3, 0)","(0, ±5)"],ans:0,exp:"x²/16-y²/9=1. a=4, b=3, c=5. Focos (±5,0)."},
+  {t:"fact",q:"Para obtener la forma estándar, factoriza: 16x² - 25y² = 400",f:"16x² - 25y² = 400",opts:["x²/25 - y²/16 = 1","x²/16 - y²/25 = 1","x²/400 - y²/400 = 1","16x² - 25y² = 400"],ans:0,exp:"Dividir entre 400: x²/25 - y²/16 = 1. a=5, b=4."},
+  {t:"fact",q:"Factoriza x² - 9",f:"x² - 9",opts:["(x-3)(x+3)","(x-9)(x+1)","(x+3)²","x(x-9)"],ans:0,exp:"Diferencia de cuadrados: x²-9=(x-3)(x+3). Raíces: x=±3."},
+  {t:"fact",q:"Factoriza completamente: 4x² - 36y²",f:"4x² - 36y²",opts:["4(x-3y)(x+3y)","4(x²-9y²)","(2x-6y)²","2(2x²-18y²)"],ans:0,exp:"Factor común 4: 4(x²-9y²)=4(x-3y)(x+3y)."},
+  {t:"fact",q:"Resuelve: de 25x² - 4y² = 100, encuentra las intersecciones con y = 0",f:"25x² - 4(0)² = 100",opts:["x = ±2","x = ±4","x = ±5","x = ±10"],ans:0,exp:"Con y=0: 25x²=100→x²=4→x=±2. Vértices (±2,0)."},
+  {t:"fact",q:"Para (x+2)²/16 - (y-3)²/9 = 1, el centro es:",f:"(x-h)²/a² - (y-k)²/b² = 1",opts:["(-2, 3)","(2, -3)","(-2, -3)","(2, 3)"],ans:0,exp:"h=-2, k=3. Centro: (-2, 3)."},
+  {t:"fact",q:"Identifica si 9x²-4y²-18x+16y-43=0 es hipérbola",f:"A·C = 9·(-4) < 0",opts:["Sí, porque A·C = 9·(-4) < 0","No, porque A·C > 0","Es una parábola","Es un círculo"],ans:0,exp:"A=9, C=-4. A·C=-36<0 → hipérbola."},
+  {t:"fact",q:"Divide en forma estándar: 3x² - 12y² = 48",f:"3x² - 12y² = 48",opts:["x²/16 - y²/4 = 1","x²/4 - y²/16 = 1","x²/3 - y²/12 = 1","Ya es estándar"],ans:0,exp:"Dividir entre 48: x²/16-y²/4=1. a=4, b=2."},
+  {t:"fact",q:"¿Cuál ecuación representa la hipérbola con ejes intercambiados de x²/a²-y²/b²=1?",f:null,opts:["y²/a² - x²/b² = 1","x²/b² - y²/a² = 1","y²/b² - x²/a² = 1","-(x²/a²-y²/b²)=1"],ans:0,exp:"Intercambiando x e y, el eje real se vuelve vertical: y²/a²-x²/b²=1."},
+  {t:"graph",q:"¿Qué representan las líneas punteadas en la gráfica de una hipérbola?",f:null,opts:["Las asíntotas","Los focos","El eje conjugado","Las directrices"],ans:0,exp:"Las asíntotas son rectas que la hipérbola se aproxima infinitamente pero nunca toca. Se dibujan punteadas."},
+  {t:"graph",q:"En la gráfica de x²/4 - y²/9 = 1, ¿hacia dónde se abren las ramas?",f:"x²/4 - y²/9 = 1",opts:["Hacia la derecha e izquierda (eje x)","Hacia arriba y abajo (eje y)","En las cuatro diagonales","En forma circular"],ans:0,exp:"Cuando x² tiene coeficiente positivo, las ramas se abren hacia la derecha e izquierda. Vértices (±2,0)."},
+  {t:"graph",q:"Para trazar x²/9 - y²/4 = 1, ¿cuál es el rectángulo auxiliar correcto?",f:null,opts:["Vértices en (±3, ±2)","Vértices en (±2, ±3)","Vértices en (±9, ±4)","Vértices (±√9,±√4)=(±3,±2)"],ans:0,exp:"a=3, b=2. Rectángulo con vértices (±3,±2). Sus diagonales son las asíntotas."},
+  {t:"graph",q:"¿Cómo afecta un mayor valor de 'a' (con b fijo) a la hipérbola?",f:null,opts:["Las ramas son más planas (asíntotas menos inclinadas)","Las ramas son más estrechas","Forma circular","No hay cambio"],ans:0,exp:"Pendiente asíntota = b/a. Si a crece, b/a decrece → asíntotas más horizontales → ramas más planas."},
+  {t:"graph",q:"La hipérbola equilátera xy = 6 tiene asíntotas en:",f:"xy = k",opts:["Los ejes coordenados x=0, y=0","Las rectas y=±x","Las rectas y=±6","y=6x, y=x/6"],ans:0,exp:"xy=k es hipérbola rotada 45°. Sus asíntotas son los ejes: x=0 e y=0."},
+  {t:"graph",q:"Al trasladar al centro (h,k), las asíntotas se convierten en:",f:"(x-h)²/a² - (y-k)²/b² = 1",opts:["y-k = ±(b/a)(x-h)","y = ±(b/a)x","y-k = ±(b/a)x","y = ±(b/a)(x-h)+k"],ans:0,exp:"Las asíntotas pasan por (h,k): y-k=±(b/a)(x-h)."},
+  {t:"graph",q:"En la gráfica de y²/16 - x²/9 = 1, los vértices son:",f:"y²/16 - x²/9 = 1",opts:["(0, ±4)","(±4, 0)","(0, ±3)","(±3, ±4)"],ans:0,exp:"Eje vertical, a²=16→a=4. Vértices: (0,±4)."},
+  {t:"graph",q:"¿Cuántos puntos tiene la intersección de una hipérbola con sus asíntotas?",f:null,opts:["Ninguno (no se intersectan)","Exactamente dos puntos","Cuatro puntos","Depende de la hipérbola"],ans:0,exp:"Las asíntotas NUNCA intersectan la hipérbola. Son el límite al cual la curva se aproxima al infinito."},
+  {t:"graph",q:"En y²/4 - x²/4 = 1, las asíntotas son:",f:"y²-x²=4",opts:["y = ±x","y = ±2x","y = ±(1/2)x","y = ±4x"],ans:0,exp:"a=b=2. Asíntotas: y=±(a/b)x=±x. Hipérbola equilátera vertical."},
+  {t:"graph",q:"Para 3x² - y² = 12, vértices y focos son:",f:"3x² - y² = 12",opts:["Vértices (±2,0), Focos (±4,0)","Vértices (±4,0), Focos (±2,0)","Vértices (±2,0), Focos (±2√2,0)","Vértices (0,±2), Focos (0,±4)"],ans:0,exp:"÷12: x²/4-y²/12=1. a=2, b=2√3, c=4. Vértices (±2,0), Focos (±4,0)."},
+  {t:"calc",q:"Determina la ecuación con focos (±5,0) y vértices (±3,0).",f:"c=5, a=3",opts:["x²/9 - y²/16 = 1","x²/25 - y²/9 = 1","x²/16 - y²/9 = 1","x²/9 - y²/25 = 1"],ans:0,exp:"a=3, c=5, b²=25-9=16. Ecuación: x²/9-y²/16=1."},
+  {t:"calc",q:"Hipérbola con asíntotas y=±(3/2)x y vértices (±4,0).",f:"b/a=3/2",opts:["x²/16 - y²/36 = 1","x²/16 - y²/9 = 1","x²/4 - y²/9 = 1","x²/9 - y²/16 = 1"],ans:0,exp:"a=4, b/a=3/2→b=6. Ecuación: x²/16-y²/36=1."},
+  {t:"calc",q:"Calcula la distancia focal (2c) de x²/16 - y²/9 = 1",f:"c² = a² + b²",opts:["2c = 10","2c = 6","2c = 5","2c = 25"],ans:0,exp:"c²=16+9=25→c=5. Distancia focal=2c=10."},
+  {t:"calc",q:"Punto P=(5,4) ¿está sobre x²/9 - y²/16 = 1?",f:"Sustituir (5,4)",opts:["No: 25/9-1 = 16/9 ≠ 1","Sí, porque 5>3","Sí, da exactamente 1","No se puede determinar"],ans:0,exp:"(25)/9-(16)/16=25/9-1=16/9≠1. NO pertenece."},
+  {t:"calc",q:"La tangente a x²/4-y²/9=1 en el vértice (2,0) es:",f:null,opts:["x = 2","y = 0","x/2 = 1","x = 4"],ans:0,exp:"En el vértice, la tangente es vertical: x=a=2."},
+  {t:"calc",q:"La fórmula de tangente en (x₀,y₀) de x²/a²-y²/b²=1 es:",f:null,opts:["xx₀/a² - yy₀/b² = 1","x·a/x₀ - y·b/y₀ = 1","x/x₀ - y/y₀ = 1","(x-x₀)/a=(y-y₀)/b"],ans:0,exp:"Tangente en (x₀,y₀): xx₀/a²-yy₀/b²=1."},
+  {t:"calc",q:"La diferencia |PF₁-PF₂| para x²/9-y²/16=1 es:",f:"|PF₁-PF₂|=2a",opts:["6","8","10","3"],ans:0,exp:"Por definición: |PF₁-PF₂|=2a=2(3)=6."},
+  {t:"calc",q:"La hipérbola tiene e=2 y a=3. Calcula b.",f:"e=c/a",opts:["b = 3√3","b = 3","b = 6","b = √3"],ans:0,exp:"c=2·3=6. b²=36-9=27→b=3√3."},
+  {t:"calc",q:"La directriz de x²/a²-y²/b²=1 está en:",f:"directriz: x=±a²/c",opts:["x = ±a²/c","x = ±c²/a","x = ±a/b","x = ±b²/c"],ans:0,exp:"Directriz: x=±a/e=±a²/c. Para a=3,c=5: x=±9/5=±1.8."},
+  {t:"conc",q:"¿Cuál de estas ecuaciones es una hipérbola?",f:null,opts:["x² - 2y² = 4","x² + 2y² = 4","x² + y² = 4","y = x²"],ans:0,exp:"x²-2y²=4→x²/4-y²/2=1: hipérbola. Coeficientes con signos opuestos."},
+  {t:"conc",q:"¿Qué forma tiene x²-y²=1?",f:"x²-y²=1",opts:["Hipérbola equilátera a=b=1","Parábola","Elipse","No es cónica"],ans:0,exp:"x²-y²=1: hipérbola equilátera con a=b=1. Asíntotas y=±x. e=√2."},
+  {t:"conc",q:"y=k/x representa:",f:"y=k/x → xy=k",opts:["Hipérbola equilátera con asíntotas en los ejes","Parábola horizontal","Exponencial","Hipérbola imposible"],ans:0,exp:"xy=k es hipérbola equilátera rotada 45°. Asíntotas: x=0 e y=0."},
+  {t:"conc",q:"Si A=4, C=-4 en Ax²+Cy²+...=0, la cónica es:",f:"A·C=-16<0",opts:["Hipérbola","Elipse","Círculo","Parábola"],ans:0,exp:"A·C=-16<0 → hipérbola."},
+  {t:"conc",q:"Eje de simetría principal de y²/25-x²/9=1:",f:null,opts:["Eje y (vertical)","Eje x (horizontal)","y=x","No tiene"],ans:0,exp:"y² positivo → eje real vertical (eje y)."},
+  {t:"conc",q:"Dos hipérbolas son conjugadas si:",f:null,opts:["Una es x²/a²-y²/b²=1 y la otra y²/b²-x²/a²=1","Tienen el mismo centro","Comparten asíntotas y=±(b/a)x","Las 3 anteriores"],ans:2,exp:"Las hipérbolas conjugadas comparten las mismas asíntotas. Centro igual, pero ejes perpendiculares."},
+  {t:"conc",q:"La hipérbola x²/a²-y²/b²=1 siempre pasa por:",f:null,opts:["(a,0) y (-a,0)","(0,b) y (0,-b)","(c,0) y (-c,0)","(a,b) y (-a,-b)"],ans:0,exp:"Los vértices (±a,0) siempre pertenecen a la hipérbola."},
+  {t:"calc",q:"Distancia |d| con v=5km/s, Δt=0.006s. Diferencia de distancias:",f:"d=v·t",opts:["0.03 km = 30 m","0.06 km","50 m","300 m"],ans:0,exp:"d=5·0.006=0.03km=30m. El epicentro está en una hipérbola con 2a=30m."},
+  {t:"calc",q:"Trayectoria de cometa: x²/4-y²/12=1 (UA). Excentricidad:",f:"e=c/a",opts:["e=2","e=√13/2","e=4","e=1/2"],ans:0,exp:"a=2, b=2√3. c²=4+12=16→c=4. e=4/2=2."},
+  {t:"calc",q:"(x-2)²/9-(y+1)²/16=1 tiene focos en:",f:"c²=9+16=25,c=5",opts:["(7,-1) y (-3,-1)","(2,-6) y (2,4)","(±5,0)","(2±4,-1)"],ans:0,exp:"Centro (2,-1), c=5. Focos: (7,-1) y (-3,-1)."},
+  {t:"calc",q:"Asíntotas de (y-3)²/4-(x+1)²/5=1:",f:"Eje vertical",opts:["y-3=±(2/√5)(x+1)","y-3=±(√5/2)(x+1)","y=±(2/√5)x","y=±(√5/2)x"],ans:0,exp:"a=2, b=√5. Pendiente=a/b=2/√5. Asíntotas: y-3=±(2/√5)(x+1)."},
+  {t:"calc",q:"Identifica: 2x²-3y²+8x+12y+2=0",f:"A·C=2·(-3)=-6<0",opts:["Hipérbola (A·C<0)","Elipse","Parábola","Círculo"],ans:0,exp:"A=2, C=-3. A·C=-6<0 → hipérbola."},
+  {t:"calc",q:"Para (x+4)²/25-(y-1)²/11=1, calcula e.",f:"c²=25+11=36",opts:["e=6/5","e=5/6","e=6/11","e=√36/√25=6/5"],ans:0,exp:"a=5, c=6. e=6/5=1.2."},
+  {t:"calc",q:"Si e=√2 y a=5, calcula b.",f:"c=5√2",opts:["b=5","b=5√2","b=5/√2","b=10"],ans:0,exp:"c=5√2. b²=50-25=25→b=5. Hipérbola equilátera."},
+  {t:"calc",q:"Halla k para que kx²-3y²=12 sea hipérbola con a=2.",f:"a²=12/k=4",opts:["k=3","k=4","k=6","k=12"],ans:0,exp:"a²=12/k=4→k=3. Ecuación: x²/4-y²/4=1."},
+  {t:"fact",q:"Resuelve sistema: x²/4-y²/9=1 e y=x-1. Método:",f:null,opts:["Sustituir y=x-1 y obtener cuadrática en x","Suma de ecuaciones","Multiplicar ecuaciones","Solo solución gráfica"],ans:0,exp:"Sustituye y=x-1: x²/4-(x-1)²/9=1. Mult por 36: 9x²-4(x-1)²=36→5x²+8x-40=0. Dos soluciones reales."},
+  {t:"fact",q:"Factorización: ax²-ay² con a=b:",f:null,opts:["a(x-y)(x+y)","a·x·y","(ax-ay)²","No factoriza"],ans:0,exp:"ax²-ay²=a(x²-y²)=a(x-y)(x+y)."},
+  {t:"calc",q:"¿Cuántas soluciones tiene x²/9-y²/4=1 con y=3?",f:null,opts:["Dos soluciones reales","Una solución","Ninguna","Infinitas"],ans:0,exp:"x²/9=1+9/4=13/4→x=±(3√13)/2. Dos soluciones."},
+  {t:"calc",q:"Expresa y² en función de x para x²/16-y²/9=1:",f:null,opts:["y²=9(x²/16-1)","y²=x²/16-1","y²=9x²-16","y=±3√(x²/16-1)"],ans:0,exp:"y²/9=x²/16-1→y²=9(x²/16-1)=9x²/16-9."},
+  {t:"conc",q:"¿Qué sección cónica se obtiene al cortar un cono doble con plano que cruza ambas hojas?",f:null,opts:["Hipérbola","Elipse","Parábola","Círculo"],ans:0,exp:"La hipérbola se forma cuando el plano de corte intersecta ambas hojas del cono doble."},
+  {t:"conc",q:"x²/a²-y²/b²=0 representa:",f:null,opts:["Dos rectas y=±(b/a)x","Un punto","Parábola","Vacío"],ans:0,exp:"(x/a-y/b)(x/a+y/b)=0: dos rectas por el origen = asíntotas de la hipérbola."},
+  {t:"conc",q:"Excentricidad de hipérbola equilátera:",f:"a=b→c=a√2",opts:["e=√2≈1.414","e=2","e=1","e=√3"],ans:0,exp:"c²=2a²→c=a√2→e=√2. Asíntotas perpendiculares."},
+  {t:"conc",q:"Diferencia principal entre elipse e hipérbola:",f:null,opts:["Elipse: c²=a²-b²,e<1; Hipérbola: c²=a²+b²,e>1","Solo la orientación","La hipérbola no tiene focos","Son iguales rotadas"],ans:0,exp:"Elipse: c²=a²-b², cerrada, e<1. Hipérbola: c²=a²+b², abierta, e>1."},
+  {t:"conc",q:"Para hipérbola vertical centrada en (h,k), los focos están en:",f:null,opts:["(h, k±c)","(h±c, k)","(h±a, k)","(h, k±a)"],ans:0,exp:"Eje vertical → focos: (h, k±c)."},
+  {t:"conc",q:"¿Cuántas asíntotas tiene una hipérbola?",f:null,opts:["Exactamente dos","Una","Cuatro","Depende de e"],ans:0,exp:"Toda hipérbola tiene exactamente DOS asíntotas."},
+  {t:"conc",q:"xy=k con k>0 tiene ramas en cuadrantes:",f:null,opts:["I y III","II y IV","I y II","III y IV"],ans:0,exp:"xy>0: mismo signo → cuadrantes I y III."},
+  {t:"calc",q:"Parametrización correcta de x²/a²-y²/b²=1:",f:null,opts:["(a·cosh(t), b·sinh(t)) o (a·sec(t), b·tan(t))","(a·cos(t), b·sin(t))","(a·t, b/t)","(a·sinh(t), b·cosh(t))"],ans:0,exp:"Hiperbólica: x=a·cosh(t), y=b·sinh(t). Trigonométrica: x=a·sec(t), y=b·tan(t)."},
+  {t:"calc",q:"Si e=√5/2 y a=2, halla b para y²/b²-x²/a²=1.",f:"c=√5",opts:["b=1","b=√5","b=2","b=4"],ans:0,exp:"c=√5. b²=c²-a²=5-4=1→b=1."},
+  {t:"calc",q:"¿Para qué valores de x existe x²/9-y²/16=1?",f:"|x|≥a",opts:["x≤-3 o x≥3","x≤-4 o x≥4","Todos los reales","Solo x=±3"],ans:0,exp:"y²≥0 → x²/9≥1 → |x|≥3."},
+  {t:"calc",q:"El punto más cercano al origen en x²/4-y²=1 es:",f:null,opts:["El vértice (2,0)","El origen (no pertenece)","(√5,1)","No hay mínimo"],ans:0,exp:"El mínimo es el vértice (a,0)=(2,0). Distancia mínima=a=2."},
+  {t:"calc",q:"Calcula el perímetro del rectángulo auxiliar de x²/25-y²/144=1",f:"Rectángulo 2a×2b",opts:["P=4(a+b)=4(5+12)=68","P=4ab=240","P=2(2a+2b)=68","P=4·13=52"],ans:0,exp:"Lados: 2a=10, 2b=24. P=2(10+24)=68."},
+  {t:"calc",q:"La hipérbola xy=-4 pasa por los cuadrantes:",f:"xy<0",opts:["II (x<0,y>0) y IV (x>0,y<0)","I y III","I y II","III y IV"],ans:0,exp:"xy=-4<0: x e y tienen signos opuestos → cuadrantes II y IV."},
+  {t:"conc",q:"La propiedad reflexiva de la hipérbola dice que:",f:null,opts:["Un rayo dirigido a un foco se refleja hacia el otro foco","Un rayo paralelo al eje se refleja al foco","Un rayo perpendicular a la asíntota se refleja al vértice","La tangente es paralela a la asíntota"],ans:0,exp:"Propiedad reflexiva: rayo que pasa por un foco, al reflejarse, se dirige al otro foco. Usado en telescopios Cassegrain."},
+  {t:"conc",q:"Para la hipérbola, la diferencia de distancias a los focos cumple:",f:null,opts:["La diferencia es constante = 2a","La suma es constante = 2a","El producto es constante","La razón es constante"],ans:0,exp:"DIFERENCIA |PF₁-PF₂|=2a. Para la elipse es la suma. Esta diferencia es la definición."},
+  {t:"conc",q:"La distancia del centro a una directriz es:",f:"directriz",opts:["a/e = a²/c","c/a","a·e","b²/c"],ans:0,exp:"Directriz a distancia a/e=a²/c. Para a=3, e=5/3: a/e=9/5."},
+  {t:"fact",q:"La hipérbola (y-3)²/4-(x+1)²/5=1 con centro (-1,3), a=2, b=√5. El eje es:",f:null,opts:["Vertical (y² es positivo)","Horizontal","Diagonal","No tiene eje definido"],ans:0,exp:"y² tiene signo positivo → eje vertical. Vértices (−1, 3±2) = (−1,5) y (−1,1)."},
+  {t:"calc",q:"Para la hipérbola con focos (0,±13) y vértices (0,±5), calcula b.",f:"eje vertical: c=13,a=5",opts:["b=12","b=8","b=√144=12","b=18"],ans:0,exp:"b²=c²-a²=169-25=144→b=12. Ecuación: y²/25-x²/144=1."},
+  {t:"fact",q:"Halla la hipérbola si pasa por (5,3) y tiene asíntotas y=±(3/4)x.",f:"b/a=3/4",opts:["a=4, b=3, ecuación x²/16-y²/9=1 (aprox)","a=5, b=3","a=3, b=4","No existe tal hipérbola"],ans:0,exp:"b/a=3/4→b=3k, a=4k. Sustituir (5,3): 25/16k²-9/9k²=1→(25-16)/16k²=1→k²=9/16→k=3/4. a=3, b=9/4."},
+  {t:"conc",q:"¿Cuál es la condición para que Ax²+Cy²+F=0 sea hipérbola real?",f:null,opts:["A·C<0 y F≠0","A·C>0","A=0 o C=0","A=C"],ans:0,exp:"A·C<0 garantiza hipérbola. Además F≠0 para que no sea degenerada (dos rectas)."},
+  {t:"calc",q:"La hipérbola tiene a=5, e=13/5. Calcula c y b.",f:"e=c/a",opts:["c=13, b=12","c=5, b=13","c=13, b=5","c=12, b=13"],ans:0,exp:"c=e·a=(13/5)·5=13. b²=c²-a²=169-25=144→b=12."},
+  {t:"calc",q:"El eje real de y²/36-x²/64=1 tiene longitud:",f:"2a con a²=36",opts:["12","16","6","8"],ans:0,exp:"a²=36→a=6. Longitud eje real=2a=12. Eje conjugado=2b=2·8=16."},
+];
+
+let questions=[...ALL_Q],current=0,score=0,answered=0,selectedFilter='all';
+let userAnswers=new Array(questions.length).fill(-1),showingResult=false;
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+questions=shuffle(questions);
+
+function drawHyperbola(canvas,a,b){
+  const ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  const scale=Math.min(W,H)*0.12,ox=W/2,oy=H/2;
+  ctx.strokeStyle='#e0e7ff';ctx.lineWidth=0.5;
+  for(let i=-10;i<=10;i++){ctx.beginPath();ctx.moveTo(ox+i*scale,0);ctx.lineTo(ox+i*scale,H);ctx.stroke();ctx.beginPath();ctx.moveTo(0,oy+i*scale);ctx.lineTo(W,oy+i*scale);ctx.stroke();}
+  ctx.strokeStyle='#9ca3af';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,oy);ctx.lineTo(W,oy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ox,0);ctx.lineTo(ox,H);ctx.stroke();
+  ctx.strokeStyle='#7c3aed';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(0,oy+(-ox/scale)*(b/a)*scale);ctx.lineTo(W,oy+(ox/scale)*(b/a)*scale);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,oy+(ox/scale)*(b/a)*scale);ctx.lineTo(W,oy+(-ox/scale)*(b/a)*scale);ctx.stroke();
+  ctx.setLineDash([]);ctx.strokeStyle='#1d4ed8';ctx.lineWidth=2.5;
+  for(let branch=0;branch<2;branch++){ctx.beginPath();let first=true;
+    for(let t=-3.5;t<=3.5;t+=0.03){const x=(branch===0?1:-1)*a*Math.cosh(t),y=b*Math.sinh(t),px=ox+x*scale,py=oy-y*scale;
+      if(px<0||px>W||py<0||py>H){first=true;continue;}if(first){ctx.moveTo(px,py);first=false;}else ctx.lineTo(px,py);}ctx.stroke();}
+  const c=Math.sqrt(a*a+b*b);ctx.fillStyle='#dc2626';
+  [[ox+a*scale,oy],[ox-a*scale,oy],[ox+c*scale,oy],[ox-c*scale,oy]].forEach(([px,py])=>{ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();});
+  ctx.fillStyle='#374151';ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+  ctx.fillText(`a=${a.toFixed(1)}, b=${b.toFixed(1)}, c=${c.toFixed(2)}`,W/2,H-6);
+}
+
+function getTypeLabel(t){return{calc:'🔢 Cálculo',graph:'📈 Gráfica',conc:'💡 Concepto',fact:'✏️ Álgebra'}[t]||t;}
+function getTypeClass(t){return{calc:'b-calc',graph:'b-graph',conc:'b-conc',fact:'b-fact'}[t]||'b-conc';}
+
+function render(){
+  const app=document.getElementById('app');
+  if(showingResult){renderResult(app);return;}
+  const filtered=selectedFilter==='all'?questions:questions.filter(q=>q.t===selectedFilter);
+  const q=filtered[current]||questions[current];
+  const qi=questions.indexOf(q);
+  const pct=Math.round((current/filtered.length)*100);
+  const ua=userAnswers[qi];const done=ua>=0;
+  app.innerHTML=`
+  <div style="margin-bottom:10px">
+    <div class="header-row">
+      <div><h1>📐 Quiz Hipérbola</h1><div class="subtitle">Pregunta ${current+1} de ${filtered.length} — ${getTypeLabel(q.t)}</div></div>
+      <div class="score-box"><div style="color:#16a34a">✓ ${score} correctas</div><div style="color:#dc2626">✗ ${answered-score} incorrectas</div></div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="filter-row">
+      ${['all','calc','graph','conc','fact'].map(f=>`<button class="filter-btn${selectedFilter===f?' active':''}" onclick="setFilter('${f}')">${{all:'Todas',calc:'Cálculo',graph:'Gráfica',conc:'Concepto',fact:'Álgebra'}[f]}</button>`).join('')}
+    </div>
+  </div>
+  <div class="question-card">
+    <div class="q-meta"><span class="badge ${getTypeClass(q.t)}">${getTypeLabel(q.t)}</span><span style="color:#9ca3af">Pregunta ${qi+1} / ${questions.length}</span></div>
+    <div class="q-text">${q.q}</div>
+    ${q.f?`<div class="q-formula">${q.f}</div>`:''}
+    ${q.t==='graph'&&q.f&&q.f.includes('=')?`<div style="text-align:center"><canvas id="hyp-canvas" width="300" height="200"></canvas></div>`:''}
+    <div class="options">
+      ${q.opts.map((o,i)=>{let cls='opt';if(done){if(i===q.ans)cls+=' correct';else if(i===ua&&ua!==q.ans)cls+=' wrong';else if(i!==q.ans&&i!==ua)cls+=' reveal';}
+        return`<button class="${cls}" ${done?'disabled':''} onclick="answer(${qi},${i})">${String.fromCharCode(65+i)}) ${o}</button>`;}).join('')}
+    </div>
+    <div class="explanation" id="exp" style="${done?'display:block':''}">
+      <div class="exp-title">${ua===q.ans?'✅ ¡Correcto!':'❌ Incorrecto'} — Explicación:</div>
+      ${q.exp}
+    </div>
+    <div class="nav-row">
+      <button onclick="prev()" ${current===0?'disabled':''}>← Anterior</button>
+      <button class="primary" onclick="next()">Siguiente →</button>
+      <button onclick="skipToEnd()" style="margin-left:auto;font-size:12px;color:#6b7280">Ver resultado final</button>
+    </div>
+  </div>`;
+  if(q.t==='graph'&&document.getElementById('hyp-canvas')){
+    const m=q.f.match(/\d+/g);
+    let a=3,b=2;if(m&&m.length>=2){a=Math.sqrt(parseInt(m[0])||9);b=Math.sqrt(parseInt(m[1])||4);}
+    drawHyperbola(document.getElementById('hyp-canvas'),a,b);
+  }
+}
+function setFilter(f){selectedFilter=f;current=0;render();}
+function answer(qi,i){if(userAnswers[qi]>=0)return;userAnswers[qi]=i;answered++;if(i===questions[qi].ans)score++;render();}
+function next(){const f=selectedFilter==='all'?questions:questions.filter(q=>q.t===selectedFilter);if(current<f.length-1){current++;render();}else{showingResult=true;render();}}
+function prev(){if(current>0){current--;render();}}
+function skipToEnd(){showingResult=true;render();}
+function renderResult(app){
+  const pct=Math.round(score/answered*100)||0;
+  const emoji=pct>=90?'🏆':pct>=70?'⭐':pct>=50?'📚':'💪';
+  app.innerHTML=`<div class="result-screen">
+    <div style="font-size:56px;margin-bottom:8px">${emoji}</div>
+    <div class="result-score" style="color:${pct>=70?'#16a34a':'#dc2626'}">${pct}%</div>
+    <div style="font-size:16px;color:#6b7280;margin-bottom:20px">${score} correctas de ${answered} respondidas (${questions.length} totales)</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:0 auto 24px">
+      <div class="stat"><div style="font-size:11px;color:#6b7280">Correctas</div><span style="font-size:22px;color:#16a34a">${score}</span></div>
+      <div class="stat"><div style="font-size:11px;color:#6b7280">Incorrectas</div><span style="font-size:22px;color:#dc2626">${answered-score}</span></div>
+      <div class="stat"><div style="font-size:11px;color:#6b7280">Sin resp.</div><span style="font-size:22px">${questions.length-answered}</span></div>
+    </div>
+    <div style="margin-bottom:20px;font-size:15px;color:#374151">${pct>=90?'¡Dominas la hipérbola! Eres experto en cónicas.':pct>=70?'¡Muy bien! Repasa donde fallaste.':pct>=50?'Buen intento. Estudia más la hipérbola.':'Necesitas repasar. ¡Sigue adelante!'}</div>
+    <button class="primary" onclick="resetQuiz()" style="padding:12px 28px;margin-right:10px">🔄 Reiniciar</button>
+    <button onclick="reviewWrong()" style="padding:12px 28px">📋 Revisar errores</button>
+  </div>`;}
+function resetQuiz(){questions=shuffle([...ALL_Q]);userAnswers=new Array(questions.length).fill(-1);score=0;answered=0;current=0;showingResult=false;selectedFilter='all';render();}
+function reviewWrong(){const w=questions.filter((_,i)=>userAnswers[i]>=0&&userAnswers[i]!==questions[i].ans);if(!w.length){alert('¡Sin errores que revisar!');return;}questions=w;userAnswers=new Array(questions.length).fill(-1);score=0;answered=0;current=0;showingResult=false;render();}
+render();
+</script>
+</body>
+</html>
